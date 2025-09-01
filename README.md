@@ -2,8 +2,12 @@
 
 A repo to showcase how android apps can use Anbox Cloud Appliance for local development, and to demo how Anbox can be part of github workflows for running ui screenshots tests and generating test reports.
 
-It includes [./nowinandroid](https://github.com/android/nowinandroid) (**'nia'** for short) as an example of a typical android project.
+It includes [nowinandroid](https://github.com/android/nowinandroid) (**'nia'** for short) as an example of a typical android project.
 
+- To add `nowinandroid` to anbox-cloud-demos repo as a subtree, run `git subtree add --prefix=nowinandroid https://github.com/android/nowinandroid.git main --squash`
+`
+- To pull latest changes from `nowinandroid` subtree, run `git subtree pull --prefix=nowinandroid https://github.com/android/nowinandroid.git main --squash`
+`
 ## Installation
 
 - Install [Android Studio](https://developer.android.com/studio) or VScode with all relevant dependencies and extensions, also make sure to add the following to your `~/.bashrc`
