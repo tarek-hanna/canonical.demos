@@ -1,6 +1,6 @@
 # Anbox Cloud Demos
 
-A repo to showcase how android apps can use Anbox Cloud Appliance for local development, and to demo how Anbox can be part of github workflows for running ui screenshots tests and generating test reports.
+A repo to showcase how android apps can use Anbox Cloud Appliance for local development, and to demo how Anbox can be part of github workflows for running ui screenshot tests and generating test reports.
 
 It includes [nowinandroid](https://github.com/android/nowinandroid) (**'nia'** for short) as an example of a typical android project.
 
