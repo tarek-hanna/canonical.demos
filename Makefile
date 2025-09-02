@@ -13,7 +13,7 @@ help:
 
 .PHONY: nia-build
 nia-build:
-	./nowinandroid/gradlew -p nowinandroid :app:assembleDebug
+	./nowinandroid/gradlew -p nowinandroid :app:assembleDemoDebug
 
 .PHONY: nia-install
 nia-install:
@@ -22,8 +22,8 @@ nia-install:
 .PHONY: nia-lint
 nia-lint:
 	./nowinandroid/gradlew -p nowinandroid :app:lintDemoDebug
-.PHONY: nia-test
 
+.PHONY: nia-test
 nia-test:
 	./nowinandroid/gradlew -p nowinandroid :app:testDemoDebugUnitTest
 
