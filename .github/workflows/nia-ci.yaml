@@ -1,3 +1,5 @@
+name: Now in Android CI
+
 on:
   workflow_call:
 
@@ -6,10 +8,9 @@ permissions:
 
 jobs:
   lint-and-test:
-    name: Run Lint & Unit Tests
+    name: Run Lint, Unit Tests and Screenshot Tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     defaults:
       run:
         working-directory: ./nowinandroid
@@ -17,43 +18,45 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
-        with:
-          distribution: zulu
-          java-version: 21
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@017a9effdb900e5b5b2fddfb590a105619dca3c3 # v4.4.2
-        with:
-          cache-read-only: false
+      
+      - name: Setup Android Dependencies
+        uses: ./.github/actions/setup-android
 
       - name: Run lint checks
         run: ./gradlew :app:lintDemoDebug
+
+      - name: Run unit tests
+        run: ./gradlew :app:testDemoDebugUnitTest
+
+      - name: Run screenshot tests
+        run: ./gradlew :app:compareRoborazziDemoDebug
 
       - name: Upload lint reports
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
-          name: lint-reports
+          name: nia-lint-reports
           path: '**/build/reports/lint-results-*.html'
 
-      - name: Run unit tests
-        run: ./gradlew :app:testDemoDebugUnitTest
-      - name: Upload test reports
+      - name: Upload unit test reports
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
-          name: unit-test-reports
+          name: nia-unit-test-reports
           path: '**/build/test-results/testDemoDebugUnitTest/*.xml'
+    
+      - name: Upload screenshot test reports
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: nia-screenshot-test-reports
+          path: '**/build/**/roborazzi/**'
 
   build-apk:
     name: Build Demo Debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: lint-and-test
-
     defaults:
       run:
         working-directory: ./nowinandroid
@@ -62,16 +65,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
-        with:
-          distribution: zulu
-          java-version: 21
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@017a9effdb900e5b5b2fddfb590a105619dca3c3 # v4.4.2
-        with:
-          cache-read-only: false
+      - name: Setup Android Dependencies
+        uses: ./.github/actions/setup-android
 
       - name: Build Demo Debug APK
         run: ./gradlew :app:assembleDemoDebug
@@ -79,5 +74,5 @@ jobs:
       - name: Upload Demo Debug APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: nowinandroid-demo-debug-apk
+          name: nia-demo-debug-apk
           path: '**/build/outputs/apk/**/*.apk'
