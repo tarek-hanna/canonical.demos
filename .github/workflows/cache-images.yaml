@@ -1,0 +1,40 @@
+name: Cache Anbox Cloud images
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 10 * * *'
+
+jobs:
+  cache-images:
+    name: Cache Anbox Cloud images
+    runs-on: ubuntu-latest
+    env:
+        ANDROID_VERSION: "15"
+    steps:
+    - name: Checkout
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    
+    - name: Attach to Ubuntu Pro
+      run: |
+        sudo pro attach ${{ secrets.UBUNTU_PRO_TOKEN }}
+        sudo pro enable anbox-cloud --access-only
+    
+    - name: Download images
+      run: |
+        image_server_auth="bearer:$(sudo cat /var/lib/ubuntu-advantage/private/machine-token.json | jq -r '.resourceTokens[] | select(.type=="anbox-images").token')"
+        image_server_url=https://"$image_server_auth"@images.anbox-cloud.io/stable
+
+        mkdir images
+        image_name=jammy:android${ANDROID_VERSION}:amd64
+        item_type=image
+        image_path="$(curl -s "$image_server_url"/streams/v1/images.json | \
+          jq -r "last(.products.\"$image_name\".versions[] | select(.items.\"${item_type}\" != null)).items.\"${item_type}\".path")"
+        image_url="$image_server_url"/"$image_path"
+        curl -s "$image_url" -o images/android${ANDROID_VERSION}.tar.xz
+    
+    - name: Cache all images
+      uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4
+      with:
+        path: images
+        key: anbox-images-amd64
