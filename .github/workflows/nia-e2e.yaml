@@ -34,7 +34,7 @@ jobs:
       uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4
       with:
         path: images
-        key: anbox-images-amd64
+        key: anbox-demos-images-amd64
 
     - name: Import cached images
       run: |
