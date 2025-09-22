@@ -1,6 +1,7 @@
 name: Cache Anbox Cloud images
 
 on:
+  pull_request:
   workflow_dispatch:
   schedule:
     - cron: '0 10 * * *'
