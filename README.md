@@ -35,18 +35,23 @@ export PATH=$ANDROID_HOME/platform-tools:$PATH
 
 ## GitHub Workflow
 
-- Create a PR in GitHub with committed changes in any UI element.
-- This will trigger `./workflows/nia-pr.yaml` workflow that uses:
+- Create a PR in GitHub with committed changes in any UI element in `./nowinandroid/` project.
+- This will trigger `./workflows/nia-pr.yaml` workflow that runs on GitHub hosted runner or [on AWS](https://documentation.ubuntu.com/anbox-cloud/howto/install-appliance/install-on-aws/), and calls the following workflows:
 
-    1- `./workflows/nia-ci.yaml`:
-    
-    - Runs `ubuntu-latest` on GitHub hosted runner.
-    
-    - Runs `./actions/setup-android/action.yaml` to install JDK, Gradle and Android SDK dependencies.
-    
+1. `./workflows/nia-ci.yaml`:
+            
     - Runs lint checks, unit tests and roborazzi screenshot tests.
     
-    - Builds the Demo APK.
+    - Builds the DemoDebug APK.
     
-    - Uploads the lint, unit test and screenshot test reports, as well as the demo APK as artifacts.
+    - Uploads the lint, unit test and screenshot test reports, as well as the APK as artifacts.
     
+2. And `./workflows/nia-e2e.yaml`:
+ 
+    - Runs `canonical/anbox-cloud-github-action` to install LXD and the Anbox Cloud Appliance [skipped if self-hosted].
+    
+    - Restores cached Android image, launch it and connects the instance with ADB.
+
+    - Run E2E tests (Equivalent to running make nia-e2e-test)
+
+- Another workflow is `cache-images.yaml` to download and cache Android images, that is scheduled to run every day at 10:00 AM, or can manually be dispatched.

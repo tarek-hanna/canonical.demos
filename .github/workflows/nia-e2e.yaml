@@ -1,0 +1,64 @@
+name: Now in Android CI
+
+on:
+  workflow_call:
+  
+permissions:
+  contents: read
+
+jobs:
+  nia-e2e:
+    name: Setup Anbox and Run E2E Tests
+    runs-on: ubuntu-latest
+    env:
+        ANDROID_VERSION: "15"
+    timeout-minutes: 60
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+    - name: Setup Anbox Cloud
+      uses: canonical/anbox-cloud-github-action@dc99b94280cfcf44a86b62aeac25ba34f14725e0
+      with:
+        channel: latest/stable
+
+    - name: Tune Anbox Cloud
+      run: |
+        amc config set container.security_updates false
+
+    - name: Restore cached images
+      uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4
+      with:
+        path: images
+        key: anbox-images-amd64
+
+    - name: Import cached images
+      run: |
+        amc image add jammy:android${ANDROID_VERSION}:amd64 ./images/android${ANDROID_VERSION}.tar.xz
+
+    - name: Create android instance
+      id: create-instance
+      run: |
+        id="$(amc launch -r -s adb jammy:android${ANDROID_VERSION}:amd64)"
+        amc wait -c status=running "$id"
+        echo "id=$id" >> "$GITHUB_OUTPUT"
+
+    - name: Access android over adb
+      run: |
+        sudo apt install -y adb
+        id=${{ steps.create-instance.outputs.id }}
+        addr="$(amc show "$id" --format=json | jq -r .network.address)"
+        adb connect "$addr":5559
+        test "$(adb shell getprop ro.product.model)" = Anbox
+
+    - name: Run e2e tests
+      run: ./gradlew :app:connectedDemoDebugAndroidTest
+      working-directory: ./nowinandroid
+
+    - name: Upload e2e test reports
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      if: always()
+      with:
+        name: nia-e2e-test-reports
+        path: '**/build/reports/androidTests/**'
