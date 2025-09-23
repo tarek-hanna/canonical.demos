@@ -13,9 +13,6 @@ jobs:
     env:
         ANDROID_VERSION: "15"
     timeout-minutes: 60
-    defaults:
-      run:
-        working-directory: ./nowinandroid
     
     steps:
     - name: Checkout
@@ -57,6 +54,7 @@ jobs:
 
     - name: Run e2e tests
       run: ./gradlew :app:connectedDemoDebugAndroidTest
+      working-directory: ./nowinandroid
 
     - name: Upload e2e test reports
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
