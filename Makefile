@@ -9,6 +9,7 @@ help:
 	@echo "  nia-lint - Run lint checks on nia app"
 	@echo "  nia-unit-test - Run unit tests on nia app"
 	@echo "  nia-screenshot-test - Run screenshot tests on nia app"
+	@echo "  nia-e2e-test - Run end-to-end tests on nia app"
 	@echo "  nia-clean - Clean build directory in nia app"
 	@echo "  nia-tasks - List available gradle tasks for nia app"
 
@@ -32,6 +33,10 @@ nia-unit-test:
 .PHONY: nia-screenshot-test
 nia-screenshot-test:
 	./nowinandroid/gradlew -p nowinandroid :app:compareRoborazziDemoDebug
+
+.PHONY: nia-e2e-test
+nia-e2e-test:
+	./nowinandroid/gradlew -p nowinandroid :app:connectedDemoDebugAndroidTest
 
 .PHONY: nia-clean
 nia-clean:
