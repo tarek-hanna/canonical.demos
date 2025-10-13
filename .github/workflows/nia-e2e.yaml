@@ -1,4 +1,4 @@
-name: Now in Android CI
+name: Now in Android E2E
 
 on:
   workflow_call:
@@ -21,18 +21,48 @@ jobs:
     - name: Setup Anbox Cloud
       uses: canonical/anbox-cloud-github-action@dc99b94280cfcf44a86b62aeac25ba34f14725e0
       with:
-        channel: latest/stable
+        channel: 1.28/edge/amc-connect
 
     - name: Tune Anbox Cloud
       run: |
         amc config set container.security_updates false
+
+    - name: Setup remote amc
+      env:
+        REMOTE_AMC_URL: ${{ vars.REMOTE_AMC_URL }}
+        REMOTE_SERVER_CERT: ${{ secrets.REMOTE_SERVER_CERT }}
+        REMOTE_CLIENT_CERT: ${{ secrets.REMOTE_CLIENT_CERT }}
+        REMOTE_CLIENT_KEY: ${{ secrets.REMOTE_CLIENT_KEY }}
+      run: |
+        set -x
+
+        dir="$HOME/snap/anbox-cloud-appliance/current/client"
+        url=${REMOTE_AMC_URL}
+        if [ -z "${url}" ]; then
+            url="https://$(amc config show | grep -Po 'core\.https_address:\s*\K.*')"
+            amc config trust add "${dir}/client.crt"
+        fi
+
+        if [[ -n "${REMOTE_CLIENT_CERT}" && -n "${REMOTE_CLIENT_KEY}" ]]; then
+          pem="${REMOTE_CLIENT_CERT}"$'\n'"${REMOTE_CLIENT_KEY}"
+          echo "${pem}" | amc auth identity create tls/test-user -
+        fi
+
+        if [ -n "${REMOTE_SERVER_CERT}" ]; then
+          mkdir -p "${dir}/servercerts"
+          echo "$REMOTE_SERVER_CERT" > ${dir}/servercerts/server.crt
+        fi
+
+        amc remote add --accept-certificate server "${url}"
+        amc remote set-default server
 
     - name: Restore cached images
       uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4
       with:
         path: images
         key: anbox-images-amd64
-
+        fail-on-cache-miss: true
+  
     - name: Import cached images
       run: |
         amc image add jammy:android${ANDROID_VERSION}:amd64 ./images/android${ANDROID_VERSION}.tar.xz
@@ -40,21 +70,38 @@ jobs:
     - name: Create android instance
       id: create-instance
       run: |
-        id="$(amc launch -r -s adb jammy:android${ANDROID_VERSION}:amd64)"
+        sudo snap restart anbox-cloud-appliance.ams
+        sleep 30
+        id="$(amc launch --enable-streaming jammy:android${ANDROID_VERSION}:amd64)"
         amc wait -c status=running "$id"
         echo "id=$id" >> "$GITHUB_OUTPUT"
 
-    - name: Access android over adb
+    - name: Connect over adb
       run: |
-        sudo apt install -y adb
+        set -x
+
         id=${{ steps.create-instance.outputs.id }}
-        addr="$(amc show "$id" --format=json | jq -r .network.address)"
-        adb connect "$addr":5559
-        test "$(adb shell getprop ro.product.model)" = Anbox
+        rm -fr logs && mkdir -p logs
+        amc connect -k "$id" |& tee logs/anbox-connect.log &
+
+        wait_for_adb_connect() {
+          for i in {1..5}; do
+            if grep "adb connect 127.0.0.1" logs/anbox-connect.log; then
+              return 0
+            fi
+            sleep 5
+          done
+          return 1
+        }
+        
+        wait_for_adb_connect
+        url=$(grep -oP 'adb connect\s*\K.*' logs/anbox-connect.log)                  
+        adb connect "${url}"
 
     - name: Run e2e tests
-      run: ./gradlew :app:connectedDemoDebugAndroidTest
       working-directory: ./nowinandroid
+      run: |
+        ./gradlew :app:connectedDemoDebugAndroidTest
 
     - name: Upload e2e test reports
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -62,3 +109,11 @@ jobs:
       with:
         name: nia-e2e-test-reports
         path: '**/build/reports/androidTests/**'
+        
+    - name: Clean up android instance
+      if: always()
+      run: |
+        id=${{ steps.create-instance.outputs.id }}
+        amc delete -y "$id"
+      
+       

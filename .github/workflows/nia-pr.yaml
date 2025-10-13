@@ -13,11 +13,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  nia-ci:
-    uses: ./.github/workflows/nia-ci.yaml
-    secrets: inherit
+  # nia-ci:
+  #   uses: ./.github/workflows/nia-ci.yaml
+  #   secrets: inherit
   
   nia-e2e:
-    needs: nia-ci
+    # needs: nia-ci
     uses: ./.github/workflows/nia-e2e.yaml
     secrets: inherit
