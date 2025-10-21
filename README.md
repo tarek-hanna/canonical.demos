@@ -52,7 +52,7 @@ export PATH=$ANDROID_HOME/platform-tools:$PATH
     
     - Restores cached Android image, launch it and connects the instance with ADB.
 
-    - Run E2E tests (Equivalent to running make nia-e2e-test)
+    - Runs E2E tests (Equivalent to running make nia-e2e-test)
 
     - Uploads the e2e test report to the artifacts
     
@@ -61,8 +61,8 @@ export PATH=$ANDROID_HOME/platform-tools:$PATH
 **Notes**
 - Another workflow is `cache-images.yaml` to download and cache Android images, that is scheduled to run every day at 10:00 AM, or can manually be dispatched.
 
-- To add a remote amc where you launch the Android image, and connect to adb for running e2e tests, you must provide the following in the repos secrets: otherwise the runner's internal ip will be used as the remote url.
-1. `REMOTE_AMC_URL`: in this format `https://<remote-amc-ip>:8444`
-2. `REMOTE_CLIENT_CERT`: content found in `$HOME"/snap/anbox-cloud-appliance/current/client/client.crt`
-3. `REMOTE_CLIENT_KEY`: content found in `$HOME"/snap/anbox-cloud-appliance/current/client/client.key`
-in the repos secrets;
+- To add a remote amc where you launch the Android image, and connect to adb for running e2e tests, you must provide the following in the repos variables and secrets: otherwise the runner's internal ip will be used as the remote url.
+1. `vars.REMOTE_AMC_URL `: in this format `https://<remote-amc-ip>:8444`
+2. `secrets.REMOTE_SERVER_CERT`: content found in `/var/snap/anbox-cloud-appliance/common/ams/server/ams.crt`
+3. `secrets.GH_RUNNER_CERT`: content found in `$HOME"/snap/anbox-cloud-appliance/current/client/client.crt`
+4. `secrets.GH_RUNNER_KEY`: content found in `$HOME"/snap/anbox-cloud-appliance/current/client/client.key`
