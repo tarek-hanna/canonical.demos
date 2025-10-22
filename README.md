@@ -2,7 +2,7 @@
 
 A repository to showcase how Android applications can use the Anbox Cloud Appliance for local development, and to demo how it can be used as part of GitHub workflows for running UI screenshot tests and generating test reports.
 
-It includes [nowinandroid](https://github.com/android/nowinandroid) (**'nia'** for short) as an example of a typical android project.
+It includes [nowinandroid](https://github.com/android/nowinandroid) (**'nia'** for short) as an example of a typical Android project.
 
 - To add `nowinandroid` to anbox-cloud-demos repository as a subtree, run `git subtree add --prefix=nowinandroid https://github.com/android/nowinandroid.git main --squash`.
 `
@@ -25,7 +25,7 @@ export PATH=$ANDROID_HOME/platform-tools:$PATH
 - Clone the repository and open the root directory in Android Studio or VScode.
 - Run `make nia-build | nia-install` to buil and generate nia apk or install the apk - as 'DemoDebug' flavor - directly on the connected device.
 - For more options you can run `make help` which will show all available make targets and commands.
-- Make sure to connect an android device with `adb connect`, by following this guide on how to [Access an Android instance](https://documentation.ubuntu.com/anbox-cloud/howto/android/access-android-instance/#access-the-android-instance-using-anbox-connect) running in Anbox.
+- Make sure to connect an Android device with `adb connect`, by following this guide on how to [Access an Android instance](https://documentation.ubuntu.com/anbox-cloud/howto/android/access-android-instance/#access-the-android-instance-using-anbox-connect) running in Anbox.
 
  
 ## Testing
@@ -48,10 +48,21 @@ export PATH=$ANDROID_HOME/platform-tools:$PATH
     
 2. And `./workflows/nia-e2e.yaml`:
  
-    - Runs `canonical/anbox-cloud-github-action` to install LXD and the Anbox Cloud Appliance [skipped if self-hosted].
+    - Runs `canonical/anbox-cloud-github-action` to install LXD and the Anbox Cloud Appliance.
     
     - Restores cached Android image, launch it and connects the instance with ADB.
 
-    - Run E2E tests (Equivalent to running make nia-e2e-test)
+    - Runs E2E tests (Equivalent to running make nia-e2e-test)
 
+    - Uploads the e2e test report to the artifacts
+    
+    - Cleans up the created Android instance after finishing all tests
+
+**Notes**
 - Another workflow is `cache-images.yaml` to download and cache Android images, that is scheduled to run every day at 10:00 AM, or can manually be dispatched.
+
+- To add a remote amc where you launch the Android image, and connect to adb for running e2e tests, you must provide the following in the repos variables and secrets: otherwise the runner's internal ip will be used as the remote url.
+1. `vars.REMOTE_AMC_URL `: in this format `https://<remote-amc-ip>:8444`
+2. `secrets.REMOTE_SERVER_CERT`: content found in `/var/snap/anbox-cloud-appliance/common/ams/server/ams.crt`
+3. `secrets.GH_RUNNER_CERT`: content found in `$HOME"/snap/anbox-cloud-appliance/current/client/client.crt`
+4. `secrets.GH_RUNNER_KEY`: content found in `$HOME"/snap/anbox-cloud-appliance/current/client/client.key`
